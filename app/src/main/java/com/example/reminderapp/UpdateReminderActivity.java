@@ -11,6 +11,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.TimePicker;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -39,7 +40,7 @@ public class UpdateReminderActivity extends AppCompatActivity {
     EditText titleEditText,contentEditText;
     ImageButton backbtn;
     String title,content,docId;
-    EditText txtNgay, txtgio;
+    TextView txtNgay, txtgio;
     Button dateBtn, timeBtn, updateBtn;
     Button deleteNoteTextViewBtn;
     List<Reminder> reminderList = new ArrayList<>();
@@ -68,7 +69,6 @@ public class UpdateReminderActivity extends AppCompatActivity {
 
 
         //backbtn
-
         backbtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -150,6 +150,15 @@ public class UpdateReminderActivity extends AppCompatActivity {
     }
 
     void UpdateNote(){
+        String noteTitle = titleEditText.getText().toString();
+        String noteContent = contentEditText.getText().toString();
+        String noteDate = txtNgay.getText().toString();
+        String noteTime = txtgio.getText().toString();
+        if(noteTitle.isEmpty() || noteDate.isEmpty() || noteTime.isEmpty() ){
+            Toast.makeText(UpdateReminderActivity.this, "Missing information", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         Calendar c = Calendar.getInstance();
         c.set(selectedYear[0],
                 selectedMonth[0],
@@ -158,12 +167,6 @@ public class UpdateReminderActivity extends AppCompatActivity {
                 selectedMinute[0],
                 0);
         Timestamp timestamp = new Timestamp(c.getTime());
-        String noteTitle = titleEditText.getText().toString();
-        String noteContent = contentEditText.getText().toString();
-        if(noteTitle==null || noteTitle.isEmpty() ){
-            titleEditText.setError("Title is required");
-            return;
-        }
         int id = getIntent().getIntExtra("id",0);
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         Category category = (Category) getIntent().getSerializableExtra("category");

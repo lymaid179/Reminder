@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.reminderapp.Adapter.ItemAdapter;
+import com.example.reminderapp.Interface.ItemCheckClicked;
 import com.example.reminderapp.Interface.ItemClicked;
 import com.example.reminderapp.Model.Category;
 import com.example.reminderapp.Model.Reminder;
@@ -31,15 +32,18 @@ import com.google.firebase.firestore.QuerySnapshot;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 
-public class MainActivity extends AppCompatActivity implements ItemClicked, Serializable {
+public class MainActivity extends AppCompatActivity implements ItemClicked, ItemCheckClicked {
 
     FloatingActionButton floatingActionButton;
     TabLayout tabLayout;
     ImageButton menuBtn;
     RecyclerView recyclerView;
     List<Reminder> reminderList = new ArrayList<>();
+    List<Reminder> adapterReminderList = new ArrayList<>();
     ItemAdapter adapter;
 
 
@@ -53,8 +57,7 @@ public class MainActivity extends AppCompatActivity implements ItemClicked, Seri
         menuBtn = findViewById(R.id.menubtn);
         recyclerView = findViewById(R.id.listItem);
         tabLayout = findViewById(R.id.tabLayout);
-        tabLayout.addTab(tabLayout.newTab().setText("Hoạt Động"));
-        tabLayout.addTab(tabLayout.newTab().setText("Đã hoàn thành"));
+
         menuBtn.setOnClickListener((v)->showMenu() );
 
        //nut troi
@@ -66,10 +69,33 @@ public class MainActivity extends AppCompatActivity implements ItemClicked, Seri
             }
 
         });
+
+        //RecycleView
         recyclerView.setLayoutManager(new LinearLayoutManager(MainActivity.this));
-        adapter = new ItemAdapter(MainActivity.this, reminderList);
+        adapter = new ItemAdapter(MainActivity.this, adapterReminderList);
         adapter.setItemClicked(this);
+        adapter.setItemCheckClicked(this);
         recyclerView.setAdapter(adapter);
+
+        //TabLayout
+        tabLayout.addTab(tabLayout.newTab().setText("Hoạt Động"));
+        tabLayout.addTab(tabLayout.newTab().setText("Đã hoàn thành"));
+        tabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                getDataIsDone(tabLayout.getSelectedTabPosition());
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+
+            }
+        });
 
     }
 
@@ -82,8 +108,11 @@ public class MainActivity extends AppCompatActivity implements ItemClicked, Seri
 
     private void getData(){
         reminderList.clear();
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-        db.collection("notes").get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+        db.collection("notes")
+                .whereEqualTo("userEmail", user.getEmail())
+                .get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
             @Override
             public void onComplete(@NonNull Task<QuerySnapshot> task) {
                 if (task.isSuccessful()) {
@@ -91,10 +120,30 @@ public class MainActivity extends AppCompatActivity implements ItemClicked, Seri
                         Reminder reminder = document.toObject(Reminder.class);
                         reminderList.add(reminder);
                     }
-                    adapter.notifyDataSetChanged();
+
+                    getDataIsDone(tabLayout.getSelectedTabPosition());
                 }
             }
         });
+    }
+
+    private void getDataIsDone(int tabPosition) {
+        adapterReminderList.clear();
+        boolean isDone = false;
+        if (tabPosition == 0) {
+            isDone = false;
+        } else {
+            isDone = true;
+        }
+        boolean finalIsDone = isDone;
+        List<Reminder> filterReminder = reminderList.stream().filter(new Predicate<Reminder>() {
+            @Override
+            public boolean test(Reminder reminder) {
+                return reminder.isCheckDone() == finalIsDone;
+            }
+        }).collect(Collectors.toList());
+        adapterReminderList.addAll(filterReminder);
+        adapter.notifyDataSetChanged();
     }
 
     void showMenu(){
@@ -132,7 +181,7 @@ public class MainActivity extends AppCompatActivity implements ItemClicked, Seri
 
     @Override
     public void ItemClicked(View v, int position) {
-        Reminder reminder = reminderList.get(position);
+        Reminder reminder = adapterReminderList.get(position);
         Intent intent = new Intent(MainActivity.this, UpdateReminderActivity.class);
         intent.putExtra("id", reminder.getId());
         intent.putExtra("title", reminder.getTitle());
@@ -141,5 +190,10 @@ public class MainActivity extends AppCompatActivity implements ItemClicked, Seri
         intent.putExtra("category", reminder.getImage());
 
         startActivity(intent);
+    }
+
+    @Override
+    public void ItemCheckClicked(View v, int position, boolean isDone) {
+        getData();
     }
 }

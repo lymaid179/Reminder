@@ -87,15 +87,14 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal">
 
-            <EditText
+            <TextView
                 android:id="@+id/textNgay"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginRight="10dp"
                 android:layout_weight="1"
                 android:ems="10"
-                android:hint="Date"
-                android:inputType="textPersonName" />
+                android:textSize="18dp" />
 
             <Button
                 android:id="@+id/button3"
@@ -114,15 +113,14 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal">
 
-            <EditText
+            <TextView
                 android:id="@+id/textGio"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginRight="10dp"
                 android:layout_weight="1"
                 android:ems="10"
-                android:hint="Time"
-                android:inputType="textPersonName" />
+                android:textSize="18dp" />
 
             <Button
                 android:id="@+id/button4"

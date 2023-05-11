@@ -11,6 +11,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.TimePicker;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -40,9 +41,7 @@ public class NoteDetailsActivity extends AppCompatActivity {
     EditText titleEditText,contentEditText;
     ImageButton backbtn;
     TextView pageTitleTextView;
-    String title,content,docId;
-    EditText txtNgay, txtgio;
-    boolean isEditMode = false;
+    TextView txtNgay, txtgio;
     Button dateBtn, timeBtn, addBtn;
 
     List<Reminder> reminderList = new ArrayList<>();
@@ -132,6 +131,15 @@ public class NoteDetailsActivity extends AppCompatActivity {
 
 
     void saveNote(){
+        String noteTitle = titleEditText.getText().toString();
+        String noteContent = contentEditText.getText().toString();
+        String noteDate = txtNgay.getText().toString();
+        String noteTime = txtgio.getText().toString();
+        if(noteTitle.isEmpty() || noteDate.isEmpty() || noteTime.isEmpty() ){
+            Toast.makeText(NoteDetailsActivity.this, "Missing information", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         Calendar c = Calendar.getInstance();
         c.set(selectedYear[0],
                 selectedMonth[0],
@@ -140,12 +148,6 @@ public class NoteDetailsActivity extends AppCompatActivity {
                 selectedMinute[0],
                 0);
         Timestamp timestamp = new Timestamp(c.getTime());
-        String noteTitle = titleEditText.getText().toString();
-        String noteContent = contentEditText.getText().toString();
-        if(noteTitle==null || noteTitle.isEmpty() ){
-            titleEditText.setError("Title is required");
-            return;
-        }
         int id = 0;
         if (!reminderList.isEmpty()) {
             id = reminderList.get(reminderList.size()-1).getId() +1;

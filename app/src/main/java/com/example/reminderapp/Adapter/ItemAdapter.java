@@ -10,11 +10,19 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.reminderapp.Interface.ItemCheckClicked;
 import com.example.reminderapp.Interface.ItemClicked;
 import com.example.reminderapp.LoginActivity;
 import com.example.reminderapp.Model.Reminder;
 import com.example.reminderapp.R;
 import com.example.reminderapp.Utility;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 
 
 import java.text.SimpleDateFormat;
@@ -27,6 +35,7 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ViewHolder>  {
     List<Reminder> Nhacnhos = new ArrayList<>();
 
     ItemClicked itemClicked;
+    ItemCheckClicked itemCheckClicked;
 
 
     public ItemAdapter(Context context,  List<Reminder> Nhacnhos) {
@@ -36,6 +45,10 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ViewHolder>  {
 
     public void setItemClicked(ItemClicked itemClicked) {
         this.itemClicked = itemClicked;
+    }
+
+    public void setItemCheckClicked(ItemCheckClicked itemCheckClicked) {
+        this.itemCheckClicked = itemCheckClicked;
     }
 
     @NonNull
@@ -60,6 +73,24 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ViewHolder>  {
             @Override
             public void onClick(View v) {
                 itemClicked.ItemClicked(v,holder.getAdapterPosition());
+            }
+        });
+        holder.isDone.setChecked(reminder.isCheckDone());
+        holder.isDone.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                holder.isDone.setChecked(!reminder.isCheckDone());
+                reminder.setCheckDone(!reminder.isCheckDone());
+                FirebaseFirestore db = FirebaseFirestore.getInstance();
+                db.collection("notes")
+                        .document(""+reminder.getId())
+                        .set(reminder)
+                        .addOnCompleteListener(new OnCompleteListener<Void>() {
+                            @Override
+                            public void onComplete(@NonNull Task<Void> task) {
+                                itemCheckClicked.ItemCheckClicked(v,holder.getAdapterPosition(), reminder.isCheckDone());
+                            }
+                        });
             }
         });
     }
