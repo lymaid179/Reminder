@@ -1,6 +1,10 @@
 package com.example.reminderapp;
 
+import static android.Manifest.permission.POST_NOTIFICATIONS;
+import static android.Manifest.permission.SCHEDULE_EXACT_ALARM;
+
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Patterns;
 import android.view.View;
@@ -11,6 +15,8 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -28,6 +34,12 @@ public class LoginActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+
+        //Ask noti request
+        if (ContextCompat.checkSelfPermission(this, POST_NOTIFICATIONS) == PackageManager.PERMISSION_DENIED) {
+            ActivityCompat.requestPermissions(this, new String[]{POST_NOTIFICATIONS}, 1);
+            ActivityCompat.requestPermissions(this, new String[]{SCHEDULE_EXACT_ALARM}, 1);
+        }
 
         emailEditText = findViewById(R.id.email_edit_text);
         passwordEditText = findViewById(R.id.password_edit_text);

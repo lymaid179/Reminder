@@ -1,6 +1,8 @@
 package com.example.reminderapp;
 
+import android.app.AlarmManager;
 import android.app.DatePickerDialog;
+import android.app.PendingIntent;
 import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.os.Bundle;
@@ -19,6 +21,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.reminderapp.Adapter.ItemAdapter;
 import com.example.reminderapp.Model.Category;
 import com.example.reminderapp.Model.Reminder;
+import com.example.reminderapp.Notifications.AlarmReceiver;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.Timestamp;
@@ -43,6 +46,7 @@ public class NoteDetailsActivity extends AppCompatActivity {
     TextView pageTitleTextView;
     TextView txtNgay, txtgio;
     Button dateBtn, timeBtn, addBtn;
+    AlarmManager alarmManager;
 
     List<Reminder> reminderList = new ArrayList<>();
 
@@ -126,10 +130,6 @@ public class NoteDetailsActivity extends AppCompatActivity {
 
     }
 
-
-
-
-
     void saveNote(){
         String noteTitle = titleEditText.getText().toString();
         String noteContent = contentEditText.getText().toString();
@@ -161,7 +161,7 @@ public class NoteDetailsActivity extends AppCompatActivity {
         Category category = (Category) getIntent().getSerializableExtra("category");
 
         Reminder note = new Reminder(id, category,noteTitle, noteContent, timestamp,false,user.getEmail());
-
+        setNotification(note);
         saveNoteToFirebase(note);
 
     }
@@ -203,6 +203,21 @@ public class NoteDetailsActivity extends AppCompatActivity {
         });
     }
 
+    private void setNotification(Reminder reminder){
+        Intent notificationIntent = new Intent(this, AlarmReceiver.class);
+        System.out.println(reminder.getTitle());
+        notificationIntent.putExtra("title", reminder.getTitle());
+        notificationIntent.putExtra("id", ""+reminder.getId());
+
+        alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE);
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(reminder.getTime().toDate());
+        System.out.println(calendar.getTime());
+
+        alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), pendingIntent);  //set repeating every 24 hours
+    }
 
 
 

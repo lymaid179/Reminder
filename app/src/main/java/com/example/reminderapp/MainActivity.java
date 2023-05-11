@@ -1,6 +1,11 @@
 package com.example.reminderapp;
 
+import static android.Manifest.permission.POST_NOTIFICATIONS;
+
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
@@ -10,6 +15,8 @@ import android.widget.PopupMenu;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -18,6 +25,7 @@ import com.example.reminderapp.Interface.ItemCheckClicked;
 import com.example.reminderapp.Interface.ItemClicked;
 import com.example.reminderapp.Model.Category;
 import com.example.reminderapp.Model.Reminder;
+import com.example.reminderapp.Notifications.AlarmReceiver;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -31,6 +39,8 @@ import com.google.firebase.firestore.QuerySnapshot;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -50,7 +60,6 @@ public class MainActivity extends AppCompatActivity implements ItemClicked, Item
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         floatingActionButton = findViewById(R.id.floatingActionButton);
@@ -116,6 +125,7 @@ public class MainActivity extends AppCompatActivity implements ItemClicked, Item
             @Override
             public void onComplete(@NonNull Task<QuerySnapshot> task) {
                 if (task.isSuccessful()) {
+                    Date date = new Date();
                     for (QueryDocumentSnapshot document : task.getResult()) {
                         Reminder reminder = document.toObject(Reminder.class);
                         reminderList.add(reminder);
