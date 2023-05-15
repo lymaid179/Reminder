@@ -280,34 +280,33 @@ public class MainActivity extends AppCompatActivity implements ItemClicked, Item
     }
 
     private void Search(Timestamp fromDate, Timestamp toDate) {
+        reminderList.clear();
 
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
         System.out.println(fromDate.toDate());
         System.out.println(toDate.toDate());
-        Query RmdListRef = db.collection("notes")
+        db.collection("notes")
                 .whereEqualTo("userEmail", user.getEmail())
                 .whereGreaterThanOrEqualTo("time", fromDate)
-                .whereLessThanOrEqualTo("time", toDate);
+                .whereLessThanOrEqualTo("time", toDate)
+                .orderBy("time")
+                .get()
+                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
 
-//
-        RmdListRef.addSnapshotListener(new EventListener<QuerySnapshot>() {
-            @Override
-            public void onEvent(@Nullable QuerySnapshot value, @Nullable FirebaseFirestoreException error) {
-                FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-                if (user != null) {
-                    reminderList.clear();
+                        if (task.isSuccessful()) {
+                            for (DocumentSnapshot document : task.getResult()) {
+                                Reminder rmd = document.toObject(Reminder.class);
+                                reminderList.add(rmd);
+                            }
 
-                    for (DocumentSnapshot document : value.getDocuments()) {
-                        Reminder rmd = document.toObject(Reminder.class);
-                        reminderList.add(rmd);
+                            getDataIsDone(tabLayout.getSelectedTabPosition());
+                        }
                     }
-
-                    getDataIsDone(tabLayout.getSelectedTabPosition());
-                }
-            }
-        });
+                });
     }
 
 
