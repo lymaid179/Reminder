@@ -3,17 +3,21 @@ package com.example.reminderapp;
 import static android.Manifest.permission.POST_NOTIFICATIONS;
 
 import android.app.AlarmManager;
+import android.app.DatePickerDialog;
 import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.DatePicker;
 import android.widget.ImageButton;
 
 import android.widget.PopupMenu;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -28,11 +32,16 @@ import com.example.reminderapp.Model.Reminder;
 import com.example.reminderapp.Notifications.AlarmReceiver;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.tabs.TabLayout;
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
@@ -50,11 +59,15 @@ public class MainActivity extends AppCompatActivity implements ItemClicked, Item
 
     FloatingActionButton floatingActionButton;
     TabLayout tabLayout;
+    TextView txtngay1, txtngay2;
+    ImageButton btnSearch;
     ImageButton menuBtn;
     RecyclerView recyclerView;
     List<Reminder> reminderList = new ArrayList<>();
     List<Reminder> adapterReminderList = new ArrayList<>();
     ItemAdapter adapter;
+    Timestamp frDate, toDate;
+
 
 
 
@@ -66,8 +79,11 @@ public class MainActivity extends AppCompatActivity implements ItemClicked, Item
         menuBtn = findViewById(R.id.menubtn);
         recyclerView = findViewById(R.id.listItem);
         tabLayout = findViewById(R.id.tabLayout);
-
+        txtngay1 = findViewById(R.id.txtNgay1);
+        txtngay2 = findViewById(R.id.txtNgay2);
+        btnSearch = findViewById(R.id.btnSearch);
         menuBtn.setOnClickListener((v)->showMenu() );
+
 
        //nut troi
         floatingActionButton.setOnClickListener(new View.OnClickListener() {
@@ -78,6 +94,64 @@ public class MainActivity extends AppCompatActivity implements ItemClicked, Item
             }
 
         });
+
+        Calendar fromCalendar = Calendar.getInstance();
+        fromCalendar.set(Calendar.HOUR_OF_DAY, 0);
+        fromCalendar.set(Calendar.MINUTE, 0);
+        fromCalendar.set(Calendar.SECOND, 0);
+        final Date[] fromDate = {fromCalendar.getTime()};
+
+        txtngay1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Calendar c = Calendar.getInstance();
+                int cy = c.get(Calendar.YEAR);
+                int cm = c.get(Calendar.MONTH);
+                int cd = c.get(Calendar.DAY_OF_MONTH);
+
+                DatePickerDialog dialog = new DatePickerDialog(MainActivity.this,
+                        new DatePickerDialog.OnDateSetListener() {
+                            @Override
+                            public void onDateSet(DatePicker datePicker, int y, int m, int d) {
+                                txtngay1.setText(d + "/" + (m +1)+ "/" + y);
+                                Calendar c = Calendar.getInstance();
+                                c.set(y, m, d, 0, 0, 0);
+                                fromDate[0] = c.getTime();
+                            }
+                        }, cy, cm, cd);
+                dialog.show();
+            }
+        });
+        Calendar toCalendar = Calendar.getInstance();
+        toCalendar.set(Calendar.HOUR_OF_DAY, 23);
+       toCalendar.set(Calendar.MINUTE,59 );
+        toCalendar.set(Calendar.SECOND, 59);
+        final Date[] toDate = {fromCalendar.getTime()};
+        txtngay2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Calendar c = Calendar.getInstance();
+                int cy = c.get(Calendar.YEAR);
+                int cm = c.get(Calendar.MONTH);
+                int cd = c.get(Calendar.DAY_OF_MONTH);
+
+                DatePickerDialog dialog = new DatePickerDialog(MainActivity.this,
+                        new DatePickerDialog.OnDateSetListener() {
+                            @Override
+                            public void onDateSet(DatePicker datePicker, int y, int m, int d) {
+                                txtngay2.setText(d + "/" + (m+1) + "/" + y);
+                                Calendar c = Calendar.getInstance();
+                                c.set(y, m, d, 23, 59, 59);
+                                toDate[0] = c.getTime();
+                            }
+                        }, cy, cm, cd);
+                dialog.show();
+            }
+        });
+
+
+        btnSearch.setOnClickListener((v)->Search(new Timestamp(fromDate[0]),new Timestamp(toDate[0])));
+
 
         //RecycleView
         recyclerView.setLayoutManager(new LinearLayoutManager(MainActivity.this));
@@ -158,7 +232,10 @@ public class MainActivity extends AppCompatActivity implements ItemClicked, Item
 
     void showMenu(){
         PopupMenu popupMenu  = new PopupMenu(MainActivity.this,menuBtn);
+        popupMenu.getMenu().add("");
         popupMenu.getMenu().add("Logout");
+
+
         popupMenu.show();
         popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
             @Override
@@ -201,6 +278,39 @@ public class MainActivity extends AppCompatActivity implements ItemClicked, Item
 
         startActivity(intent);
     }
+
+    private void Search(Timestamp fromDate, Timestamp toDate) {
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+        System.out.println(fromDate.toDate());
+        System.out.println(toDate.toDate());
+        Query RmdListRef = db.collection("notes")
+                .whereEqualTo("userEmail", user.getEmail())
+                .whereGreaterThanOrEqualTo("time", fromDate)
+                .whereLessThanOrEqualTo("time", toDate);
+
+//
+        RmdListRef.addSnapshotListener(new EventListener<QuerySnapshot>() {
+            @Override
+            public void onEvent(@Nullable QuerySnapshot value, @Nullable FirebaseFirestoreException error) {
+                FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                if (user != null) {
+                    reminderList.clear();
+
+                    for (DocumentSnapshot document : value.getDocuments()) {
+                        Reminder rmd = document.toObject(Reminder.class);
+                        reminderList.add(rmd);
+                    }
+
+                    getDataIsDone(tabLayout.getSelectedTabPosition());
+                }
+            }
+        });
+    }
+
+
 
     @Override
     public void ItemCheckClicked(View v, int position, boolean isDone) {

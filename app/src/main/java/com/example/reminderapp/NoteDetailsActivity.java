@@ -132,7 +132,7 @@ public class NoteDetailsActivity extends AppCompatActivity {
 
     void saveNote(){
         String noteTitle = titleEditText.getText().toString();
-        String noteContent = contentEditText.getText().toString();
+        String noteContext = contentEditText.getText().toString();
         String noteDate = txtNgay.getText().toString();
         String noteTime = txtgio.getText().toString();
         if(noteTitle.isEmpty() || noteDate.isEmpty() || noteTime.isEmpty() ){
@@ -153,14 +153,11 @@ public class NoteDetailsActivity extends AppCompatActivity {
             id = reminderList.get(reminderList.size()-1).getId() +1;
         }
 
-        Intent intent = getIntent();
-
-
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
         Category category = (Category) getIntent().getSerializableExtra("category");
 
-        Reminder note = new Reminder(id, category,noteTitle, noteContent, timestamp,false,user.getEmail());
+        Reminder note = new Reminder(id, category,noteTitle, noteContext, timestamp,false,user.getEmail());
         setNotification(note);
         saveNoteToFirebase(note);
 
