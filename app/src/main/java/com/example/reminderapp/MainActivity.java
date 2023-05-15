@@ -47,6 +47,7 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
 import java.io.Serializable;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -66,7 +67,7 @@ public class MainActivity extends AppCompatActivity implements ItemClicked, Item
     List<Reminder> reminderList = new ArrayList<>();
     List<Reminder> adapterReminderList = new ArrayList<>();
     ItemAdapter adapter;
-    Timestamp frDate, toDate;
+    SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
 
 
 
@@ -100,6 +101,7 @@ public class MainActivity extends AppCompatActivity implements ItemClicked, Item
         fromCalendar.set(Calendar.MINUTE, 0);
         fromCalendar.set(Calendar.SECOND, 0);
         final Date[] fromDate = {fromCalendar.getTime()};
+        txtngay1.setText(""+ dateFormat.format(fromDate[0]));
 
         txtngay1.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -113,10 +115,10 @@ public class MainActivity extends AppCompatActivity implements ItemClicked, Item
                         new DatePickerDialog.OnDateSetListener() {
                             @Override
                             public void onDateSet(DatePicker datePicker, int y, int m, int d) {
-                                txtngay1.setText(d + "/" + (m +1)+ "/" + y);
                                 Calendar c = Calendar.getInstance();
                                 c.set(y, m, d, 0, 0, 0);
                                 fromDate[0] = c.getTime();
+                                txtngay1.setText(""+ dateFormat.format(fromDate[0]));
                             }
                         }, cy, cm, cd);
                 dialog.show();
@@ -127,6 +129,7 @@ public class MainActivity extends AppCompatActivity implements ItemClicked, Item
        toCalendar.set(Calendar.MINUTE,59 );
         toCalendar.set(Calendar.SECOND, 59);
         final Date[] toDate = {fromCalendar.getTime()};
+        txtngay2.setText(""+ dateFormat.format(toDate[0]));
         txtngay2.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -139,10 +142,10 @@ public class MainActivity extends AppCompatActivity implements ItemClicked, Item
                         new DatePickerDialog.OnDateSetListener() {
                             @Override
                             public void onDateSet(DatePicker datePicker, int y, int m, int d) {
-                                txtngay2.setText(d + "/" + (m+1) + "/" + y);
                                 Calendar c = Calendar.getInstance();
                                 c.set(y, m, d, 23, 59, 59);
                                 toDate[0] = c.getTime();
+                                txtngay2.setText(""+ dateFormat.format(toDate[0]));
                             }
                         }, cy, cm, cd);
                 dialog.show();
@@ -232,7 +235,6 @@ public class MainActivity extends AppCompatActivity implements ItemClicked, Item
 
     void showMenu(){
         PopupMenu popupMenu  = new PopupMenu(MainActivity.this,menuBtn);
-        popupMenu.getMenu().add("");
         popupMenu.getMenu().add("Logout");
 
 
